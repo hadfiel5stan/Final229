@@ -45,35 +45,40 @@ h = 10
 uwinds = zeros((2, w*h))
 
 for i in 1:w*h
-    if ProblemDefinition.id_to_location(i, w)[2] < 3
-        uwinds[:, i] = [225, 10]
+    if ProblemDefinition.id_to_location(i, w)[2] == 5
+        uwinds[:, i] = [0, 10]
     else
-        uwinds[:, i] = [315, 15]
+        uwinds[:, i] = [0, 15]
     end
 end
 
 
 
-s1 = ProblemDefinition.RoutingProblem(w, h, uwinds, 100, 2500, 6.4, 1, 2, 10, 5)
-
+s1 = ProblemDefinition.RoutingProblem(w, h, uwinds, 100, 2500, 6.4, 1, 5, 15, 7)
+Astaryes = false
 @elapsed for i in 1:20
 
-    # planner = ProblemDefinition.Astarplanner()
-    # plan, aplan = ProblemDefinition.AstarPlan(s1, planner)
+    if Astaryes
+        planner = ProblemDefinition.Astarplanner()
+        plan, aplan = ProblemDefinition.AstarPlan(s1, planner)
 
-    # hist = sim(s1) do o
-    #     ret = aplan[1]
-    #     deleteat!(aplan, 1)
-    #     return ret
-    # end
+        hist = sim(s1) do o
+            ret = aplan[1]
+            deleteat!(aplan, 1)
+            return ret
+        end
+        tag = "_Astar"
+    else
 
-    solver = DESPOTSolver(bounds = DirectBounds)
-    planner = POMDPs.solve(solver, s1)
+        solver = DESPOTSolver(bounds = DirectBounds)
+        planner = POMDPs.solve(solver, s1)
 
-    hr = HistoryRecorder(max_steps = 40)
-    hist = simulate(hr, s1, planner)
+        hr = HistoryRecorder(max_steps = 40)
+        hist = simulate(hr, s1, planner)
+        tag = "DESPOT"
+    end
 
-    open("results_scenario1.csv","a") do f
+    open("results_scenario2"*tag*".csv","a") do f
         for (s, a, sp, o, r) in hist
             writedlm(f, [s.x s.y a r ""], ",")
             #println(string(s.x)*", "*string(s.y))
